@@ -66,4 +66,15 @@ class DoctrineUserRepository implements UserRepositoryInterface
     {
         $this->entityManager->flush();
     }
+
+    public function getByActivity(bool $isActive): array
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('u')
+            ->from(User::class, 'u')
+            ->where('u.active = :active')
+            ->setParameter(':active', $isActive)
+            ->getQuery()
+            ->getResult();
+    }
 }

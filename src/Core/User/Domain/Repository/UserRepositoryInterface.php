@@ -17,4 +17,6 @@ interface UserRepositoryInterface
     public function save(User $user): void;
 
     public function flush(): void;
+
+    public function getByActivity(bool $isActive): array;
 }
