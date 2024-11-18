@@ -12,8 +12,9 @@ class DoctrineInvoiceRepository implements InvoiceRepositoryInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly EventDispatcherInterface $eventDispatcher
-    ) {}
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {
+    }
 
     public function getInvoicesWithGreaterAmountAndStatus(int $amount, InvoiceStatus $invoiceStatus): array
     {
@@ -21,8 +22,10 @@ class DoctrineInvoiceRepository implements InvoiceRepositoryInterface
             ->createQueryBuilder()
             ->select('i')
             ->from(Invoice::class, 'i')
-            ->where('i.status = :invoice_status')
-            ->setParameter(':invoice_status', InvoiceStatus::NEW)
+            ->where('i.amount > :invoice_amount')
+            ->andWhere('i.status = :invoice_status')
+            ->setParameter(':invoice_amount', $amount)
+            ->setParameter(':invoice_status', $invoiceStatus)
             ->getQuery()
             ->getResult();
     }

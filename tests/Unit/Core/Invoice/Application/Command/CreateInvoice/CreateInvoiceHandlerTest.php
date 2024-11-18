@@ -39,6 +39,10 @@ class CreateInvoiceHandlerTest extends TestCase
     {
         $user = $this->createMock(User::class);
 
+        $user->expects(self::any())
+            ->method('isActive')
+            ->willReturn(true);
+
         $invoice = new Invoice(
             $user, 12500
         );
@@ -54,7 +58,7 @@ class CreateInvoiceHandlerTest extends TestCase
         $this->invoiceRepository->expects(self::once())
             ->method('flush');
 
-        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', 12500)));
+        $this->handler->__invoke(new CreateInvoiceCommand('test@test.pl', 12500));
     }
 
     public function test_handle_user_not_exists(): void
@@ -65,13 +69,45 @@ class CreateInvoiceHandlerTest extends TestCase
             ->method('getByEmail')
             ->willThrowException(new UserNotFoundException());
 
-        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', 12500)));
+        $this->handler->__invoke(new CreateInvoiceCommand('test@test.pl', 12500));
     }
 
     public function test_handle_invoice_invalid_amount(): void
     {
         $this->expectException(InvoiceException::class);
 
-        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', -5)));
+        $this->handler->__invoke(new CreateInvoiceCommand('test@test.pl', -5));
+    }
+
+    public function test_handle_user_is_active(): void
+    {
+        $user = $this->createMock(User::class);
+
+        $this->userRepository->expects(self::once())
+            ->method('getByEmail')
+            ->willReturn($user);
+
+        $user->expects(self::once())
+            ->method('isActive')
+            ->willReturn(true);
+
+        $this->handler->__invoke(new CreateInvoiceCommand('test@test.pl', 12300));
+    }
+
+    public function test_handle_user_is_not_active(): void
+    {
+        $user = $this->createMock(User::class);
+
+        $this->userRepository->expects(self::once())
+            ->method('getByEmail')
+            ->willReturn($user);
+
+        $user->expects(self::once())
+            ->method('isActive')
+            ->willReturn(false);
+
+        $this->expectException(InvoiceException::class);
+
+        $this->handler->__invoke(new CreateInvoiceCommand('test@test.pl', 12300));
     }
 }
